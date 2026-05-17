@@ -18,6 +18,7 @@ import { ApoloKidsFeature } from "../components/ApoloKidsFeature";
 import { BookCover } from "../components/BookCover";
 import { ContentMarquee } from "../components/ContentMarquee";
 import { FaithDefenceFeature } from "../components/FaithDefenceFeature";
+import { GodlyKidsPromo } from "../components/GodlyKidsPromo";
 import { NewsletterCTA } from "../components/NewsletterCTA";
 import { Reveal } from "../components/RevealSection";
 import { SectionHeader } from "../components/SectionHeader";
@@ -114,8 +115,8 @@ export function Home() {
     };
   }, []);
 
-  const featuredBooks = allFeaturedBooks.slice(0, 3);
-  const featuredAudio = playlists.slice(0, 3);
+  const featuredBooks = allFeaturedBooks.slice(0, 4);
+  const featuredAudio = playlists.slice(0, 4);
 
   const marqueeBooks = allBooks.length ? allBooks : allFeaturedBooks;
 
@@ -127,6 +128,7 @@ export function Home() {
         amazonBooks={amazonBooks}
         loading={loadingBooks}
       />
+      <GodlyKidsPromo />
       <ApoloKidsFeature />
       <FaithDefenceFeature />
       <MissionStrip />
@@ -287,18 +289,18 @@ function FeaturedBooks({
           />
         </Reveal>
 
-        <Reveal delay={120} className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal delay={120} className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {loading
-            ? Array.from({ length: 3 }).map((_, i) => (
+            ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-3xl border border-ink-900/10 bg-white/60 p-6"
+                  className="rounded-2xl border border-ink-900/10 bg-white/60 p-3 sm:p-4"
                 >
-                  <div className="aspect-[3/4] w-full animate-pulse rounded-xl bg-ink-900/10" />
-                  <div className="mt-5 space-y-3">
-                    <div className="h-3 w-16 animate-pulse rounded bg-ink-900/10" />
-                    <div className="h-6 w-3/4 animate-pulse rounded bg-ink-900/10" />
-                    <div className="h-3 w-1/2 animate-pulse rounded bg-ink-900/10" />
+                  <div className="aspect-[3/4] w-full animate-pulse rounded-lg bg-ink-900/10" />
+                  <div className="mt-3 space-y-2">
+                    <div className="h-2.5 w-16 animate-pulse rounded bg-ink-900/10" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-ink-900/10" />
+                    <div className="h-2.5 w-1/2 animate-pulse rounded bg-ink-900/10" />
                   </div>
                 </div>
               ))
@@ -327,8 +329,8 @@ function FeaturedBookCard({ book, palette }: { book: Book; palette: number }) {
       : [];
   const [errored, setErrored] = useState(false);
   return (
-    <article className="group relative flex flex-col rounded-3xl border border-ink-900/10 bg-white/70 p-6 backdrop-blur-sm transition hover:-translate-y-1 hover:shadow-soft">
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl ring-1 ring-ink-900/10">
+    <article className="group relative flex flex-col rounded-2xl border border-ink-900/10 bg-white/70 p-3 backdrop-blur-sm transition hover:-translate-y-1 hover:shadow-soft sm:p-4">
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg ring-1 ring-ink-900/10">
         {cover && !errored ? (
           <img
             src={cover}
@@ -346,34 +348,35 @@ function FeaturedBookCard({ book, palette }: { book: Book; palette: number }) {
           />
         )}
       </div>
-      <div className="mt-5 flex flex-1 flex-col">
+      <div className="mt-3 flex flex-1 flex-col">
         {cats[0] && (
-          <p className="text-xs uppercase tracking-[0.18em] text-gold-700">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-gold-700">
             {cats[0]}
           </p>
         )}
-        <h3 className="mt-2 font-serif text-2xl font-semibold text-ink-950">
+        <h3 className="mt-1 font-serif text-base font-semibold leading-snug text-ink-950 sm:text-lg">
           {book.title}
         </h3>
         {book.author && (
-          <p className="mt-1 text-sm text-ink-700">by {book.author}</p>
+          <p className="mt-0.5 text-xs text-ink-700">by {book.author}</p>
         )}
         {book.description && (
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-ink-700/90">
+          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-700/90">
             {book.description}
           </p>
         )}
-        <div className="mt-5 flex items-center justify-between border-t border-ink-900/10 pt-4">
-          <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
-            <BookOpen className="h-3.5 w-3.5" />
-            {(book.readCount ?? 0).toLocaleString()} reads
+        <div className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-3">
+          <span className="inline-flex items-center gap-1 text-[11px] text-ink-700">
+            <BookOpen className="h-3 w-3" />
+            {(book.readCount ?? 0).toLocaleString()}
           </span>
           <Link
             to="/books"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-900 transition hover:text-gold-700"
+            aria-label={`Learn more about ${book.title}`}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-ink-900 transition hover:text-gold-700"
           >
-            Learn more
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            More
+            <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>
@@ -401,18 +404,18 @@ function FeaturedAudio({
           />
         </Reveal>
 
-        <Reveal delay={120} className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal delay={120} className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
           {loading
-            ? Array.from({ length: 3 }).map((_, i) => (
+            ? Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-3xl border border-ink-900/10 bg-white/70 p-5"
+                  className="rounded-2xl border border-ink-900/10 bg-white/70 p-3 sm:p-4"
                 >
-                  <div className="aspect-square w-full animate-pulse rounded-2xl bg-ink-900/10" />
-                  <div className="mt-5 space-y-3">
-                    <div className="h-3 w-16 animate-pulse rounded bg-ink-900/10" />
-                    <div className="h-5 w-3/4 animate-pulse rounded bg-ink-900/10" />
-                    <div className="h-3 w-1/2 animate-pulse rounded bg-ink-900/10" />
+                  <div className="aspect-square w-full animate-pulse rounded-lg bg-ink-900/10" />
+                  <div className="mt-3 space-y-2">
+                    <div className="h-2.5 w-16 animate-pulse rounded bg-ink-900/10" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-ink-900/10" />
+                    <div className="h-2.5 w-1/2 animate-pulse rounded bg-ink-900/10" />
                   </div>
                 </div>
               ))
@@ -437,8 +440,8 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
     0,
   );
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-ink-900/10 bg-white/80 p-5 shadow-soft transition hover:-translate-y-1">
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl ring-1 ring-ink-900/10">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-900/10 bg-white/80 p-3 shadow-soft transition hover:-translate-y-1 sm:p-4">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg ring-1 ring-ink-900/10">
         {cover && !errored ? (
           <img
             src={cover}
@@ -448,34 +451,34 @@ function PlaylistCard({ playlist }: { playlist: Playlist }) {
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-ink-900 to-ink-800 p-6 text-center">
-            <p className="font-serif text-xl text-parchment">{playlist.title}</p>
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-ink-900 to-ink-800 p-4 text-center">
+            <p className="font-serif text-base text-parchment">{playlist.title}</p>
           </div>
         )}
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-ink-950/85 px-3 py-1 text-[11px] font-semibold text-parchment backdrop-blur-sm">
-          <Headphones className="h-3 w-3" />
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-ink-950/85 px-2 py-0.5 text-[9px] font-semibold text-parchment backdrop-blur-sm sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
+          <Headphones className="h-2.5 w-2.5" />
           {playlist.type || "Audio"}
         </span>
-        <span className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full bg-gold-400 text-ink-950 shadow-soft transition group-hover:scale-110">
-          <Play className="h-4 w-4 fill-current" />
+        <span className="absolute bottom-2 right-2 grid h-8 w-8 place-items-center rounded-full bg-gold-400 text-ink-950 shadow-soft transition group-hover:scale-110 sm:bottom-3 sm:right-3 sm:h-9 sm:w-9">
+          <Play className="h-3 w-3 fill-current sm:h-3.5 sm:w-3.5" />
         </span>
       </div>
-      <div className="mt-5 flex flex-1 flex-col">
+      <div className="mt-3 flex flex-1 flex-col">
         {(playlist.categories?.[0] || playlist.category) && (
-          <p className="text-xs uppercase tracking-[0.18em] text-gold-700">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-gold-700">
             {playlist.categories?.[0] || playlist.category}
           </p>
         )}
-        <h3 className="mt-1.5 font-serif text-xl font-semibold leading-snug text-ink-950">
+        <h3 className="mt-1 line-clamp-2 font-serif text-base font-semibold leading-snug text-ink-950 sm:text-lg">
           {playlist.title}
         </h3>
         {playlist.description && (
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-700/90">
+          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-ink-700/90">
             {playlist.description}
           </p>
         )}
-        <div className="mt-4 flex items-center justify-between border-t border-ink-900/10 pt-4 text-xs text-ink-700">
-          <span>{episodes} {episodes === 1 ? "episode" : "episodes"}</span>
+        <div className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-3 text-[11px] text-ink-700">
+          <span>{episodes} {episodes === 1 ? "ep" : "eps"}</span>
           {totalPlays > 0 && <span>{totalPlays.toLocaleString()} plays</span>}
         </div>
       </div>

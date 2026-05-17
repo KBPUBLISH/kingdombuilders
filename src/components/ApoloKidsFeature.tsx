@@ -1,5 +1,7 @@
+import { useState } from "react";
 import {
   BookOpen,
+  BookMarked,
   Check,
   Gamepad2,
   ShieldCheck,
@@ -8,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useParallaxOffset, useReveal } from "../hooks/useReveal";
+import { ApoloKidsManuscriptPreview } from "./ApoloKidsManuscriptPreview";
 
 const APOLO_KIDS_PREORDER_URL =
   "mailto:hello@kbpublish.org?subject=Apolo-Kids%20Pre-order&body=I%27d%20like%20to%20pre-order%20Apolo-Kids%20%28%2449.99%29.%20Please%20send%20me%20payment%20instructions.%20Thank%20you!";
@@ -31,12 +34,14 @@ const highlights: { icon: LucideIcon; title: string; copy: string }[] = [
 ];
 
 export function ApoloKidsFeature() {
+  const [previewSession, setPreviewSession] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [imageRef, imageOffset] = useParallaxOffset<HTMLDivElement>(0.12);
   const [headerRef, headerVisible] = useReveal<HTMLDivElement>();
   const [bodyRef, bodyVisible] = useReveal<HTMLDivElement>();
 
   return (
-    <section className="relative snap-section overflow-hidden">
+    <section id="apolo-kids" className="relative snap-section overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-b from-ink-50 via-parchment to-parchment" />
         <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-gold-300/35 blur-[110px]" />
@@ -146,17 +151,36 @@ export function ApoloKidsFeature() {
                   Free U.S. shipping on launch
                 </p>
               </div>
-              <a
-                href={APOLO_KIDS_PREORDER_URL}
-                className="btn-gold w-full justify-center text-base sm:w-auto"
-              >
-                <BookOpen className="h-4 w-4" />
-                Pre-order Online
-              </a>
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[220px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewSession((s) => s + 1);
+                    setPreviewOpen(true);
+                  }}
+                  className="btn-ghost w-full justify-center border-ink-900/20 text-base"
+                >
+                  <BookMarked className="h-4 w-4" />
+                  Preview manuscript
+                </button>
+                <a
+                  href={APOLO_KIDS_PREORDER_URL}
+                  className="btn-gold w-full justify-center text-base"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Pre-order Online
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ApoloKidsManuscriptPreview
+        key={previewSession}
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </section>
   );
 }

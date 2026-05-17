@@ -15,11 +15,11 @@ export function Logo({ variant = "dark" }: LogoProps) {
     >
       <span className="relative inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink-950 shadow-soft ring-1 ring-gold-500/40 transition group-hover:ring-gold-500/70">
         <img
-          src="/logo.png"
+          src="/logo.png?v=2"
           alt=""
           width={44}
           height={44}
-          className="block h-full w-full object-cover"
+          className="block h-full w-full object-contain p-1"
           draggable={false}
         />
       </span>

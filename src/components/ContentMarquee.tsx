@@ -27,18 +27,18 @@ type RowProps = {
 
 /**
  * A horizontally-looping row of content tiles. Items are duplicated once so
- * the keyframe `translateX(-50%)` produces a seamless loop. Pauses on hover
- * and disables motion when the user prefers reduced motion.
+ * the keyframe `translateX(-50%)` produces a seamless loop. Motion is disabled
+ * when the user prefers reduced motion.
  */
 function MarqueeRow({ tiles, duration = 90, reverse = false }: RowProps) {
   if (!tiles.length) return null;
   return (
     <div
-      className="group relative w-full min-w-0 max-w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+      className="relative w-full min-w-0 max-w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
       role="presentation"
     >
       <div
-        className="flex w-max gap-6 animate-marquee motion-reduce:animate-none group-hover:[animation-play-state:paused]"
+        className="flex w-max gap-6 animate-marquee motion-reduce:animate-none"
         style={{
           animationDuration: `${duration}s`,
           animationDirection: reverse ? "reverse" : "normal",
