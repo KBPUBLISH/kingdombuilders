@@ -1,58 +1,12 @@
-import {
-  createContext,
-  forwardRef,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { Document, Page } from "react-pdf";
-import HTMLFlipBook from "react-pageflip";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  X,
-} from "lucide-react";
-import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 
 export const APOLO_KIDS_MANUSCRIPT_PDF = "/documents/apolo-kids-interior.pdf";
 
 const MAX_PREVIEW_PAGES = 28;
-
-/** Pixel width for react-pdf rasterization (should track flip-book page width). */
-const ManuscriptPageWidthCtx = createContext(320);
-
-type FlipBookApi = {
-  pageFlip: () =>
-    | {
-        flipNext: (corner?: string) => void;
-        flipPrev: (corner?: string) => void;
-        getCurrentPageIndex: () => number;
-        getPageCount: () => number;
-      }
-    | undefined;
-};
-
-const FlipPdfPage = forwardRef<HTMLDivElement, { pageNumber: number }>(
-  function FlipPdfPage({ pageNumber }, ref) {
-    const width = useContext(ManuscriptPageWidthCtx);
-    return (
-      <div
-        ref={ref}
-        className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#f7f4ec] [&_canvas]:pointer-events-none [&_canvas]:select-none"
-      >
-        <Page
-          pageNumber={pageNumber}
-          width={Math.max(180, width)}
-          renderTextLayer={false}
-          renderAnnotationLayer={false}
-        />
-      </div>
-    );
-  },
-);
+/** Fallback until page 1 viewport is read from the PDF. */
+const DEFAULT_PAGE_ASPECT = 520 / 720;
 
 type Props = {
   open: boolean;
@@ -61,25 +15,13 @@ type Props = {
 
 export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [flipReady, setFlipReady] = useState(false);
-  const reduceMotion = usePrefersReducedMotion();
-  const [simplePage, setSimplePage] = useState(1);
-  const [bookDims, setBookDims] = useState({ w: 520, h: 720 });
-  const [pageRasterWidth, setPageRasterWidth] = useState(480);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageAspect, setPageAspect] = useState(DEFAULT_PAGE_ASPECT);
+  const [renderWidth, setRenderWidth] = useState(480);
   const stageRef = useRef<HTMLDivElement>(null);
-  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const flipBookRef = useRef<FlipBookApi | null>(null);
-  const [pageIndex, setPageIndex] = useState(0);
 
-  const syncPageIndex = useCallback(() => {
-    const api = flipBookRef.current?.pageFlip();
-    if (!api) return;
-    try {
-      setPageIndex(api.getCurrentPageIndex());
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const previewTotal =
+    numPages !== null ? Math.min(numPages, MAX_PREVIEW_PAGES) : 0;
 
   useEffect(() => {
     if (!open) return;
@@ -90,30 +32,21 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
     };
   }, [open]);
 
-  /** Defer flipbook mount one frame so layout + PDF worker settle (async setState avoids lint cascade warning). */
-  useEffect(() => {
-    if (!open || reduceMotion || numPages === null) {
-      const id = requestAnimationFrame(() => setFlipReady(false));
-      return () => cancelAnimationFrame(id);
-    }
-    const id = requestAnimationFrame(() => setFlipReady(true));
-    return () => cancelAnimationFrame(id);
-  }, [open, reduceMotion, numPages]);
+  const goPrev = useCallback(() => {
+    setCurrentPage((p) => Math.max(1, p - 1));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setCurrentPage((p) => Math.min(previewTotal || 1, p + 1));
+  }, [previewTotal]);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      if (reduceMotion || numPages === null) return;
-      if (e.key === "ArrowRight") {
-        flipBookRef.current?.pageFlip()?.flipNext("top");
-        requestAnimationFrame(syncPageIndex);
-      }
-      if (e.key === "ArrowLeft") {
-        flipBookRef.current?.pageFlip()?.flipPrev("top");
-        requestAnimationFrame(syncPageIndex);
-      }
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
     },
-    [onClose, reduceMotion, numPages, syncPageIndex],
+    [onClose, goPrev, goNext],
   );
 
   useEffect(() => {
@@ -122,75 +55,48 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onKeyDown]);
 
-  /** Size flip-book to fill the stage — PageFlip reads numeric width/height only once; bump key when bucket changes. */
+  /** Fit one page to the stage below the header (width × height, no clipping). */
   useEffect(() => {
-    if (!open || reduceMotion) return;
+    if (!open) return;
     const el = stageRef.current;
     if (!el) return;
 
-    const computeDims = () => {
-      const r = el.getBoundingClientRect();
-      /** Minimal gutter so the spread uses nearly the full stage below the header. */
-      const pad = 4;
-      const availW = Math.max(280, r.width - pad * 2);
-      const availH = Math.max(320, r.height - pad * 2);
-      /** StPageFlip: landscape uses one page width = blockWidth/2; portrait uses full block width. */
-      const minPageFromFlipBook = 260;
-      const portrait = availW < minPageFromFlipBook * 2;
-      const singlePageW = portrait ? availW : availW / 2;
-      const targetAspect = 520 / 720;
-      let pageW = singlePageW;
-      let pageH = pageW / targetAspect;
-      if (pageH > availH) {
-        pageH = availH;
-        pageW = pageH * targetAspect;
+    const measure = () => {
+      const { width, height } = el.getBoundingClientRect();
+      const pad = 12;
+      const availW = Math.max(200, width - pad * 2);
+      const availH = Math.max(280, height - pad * 2);
+      let w = availW;
+      let h = w / pageAspect;
+      if (h > availH) {
+        h = availH;
+        w = h * pageAspect;
       }
-      /** Allow large displays — only cap at absurd sizes for perf (fits ~4K spread). */
-      pageW = Math.floor(Math.min(pageW, 2160));
-      pageH = Math.floor(Math.min(pageH, 3072));
-      const bucketW = Math.round(pageW / 16) * 16;
-      const bucketH = Math.round(pageH / 16) * 16;
-      setBookDims((prev) =>
-        prev.w === bucketW && prev.h === bucketH ? prev : { w: bucketW, h: bucketH },
-      );
-      /** Rasterize PDF at single-page slot width (not spread width) so canvas is not clipped. */
-      const raster = Math.max(180, Math.floor(bucketW * 0.995));
-      setPageRasterWidth((prev) => (prev === raster ? prev : raster));
+      setRenderWidth(Math.floor(w));
     };
 
-    const debouncedMeasure = () => {
-      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
-      resizeTimerRef.current = setTimeout(() => {
-        resizeTimerRef.current = null;
-        computeDims();
-      }, 160);
-    };
-
-    computeDims();
-    const ro = new ResizeObserver(debouncedMeasure);
+    measure();
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    window.addEventListener("resize", debouncedMeasure);
+    window.addEventListener("resize", measure);
     return () => {
-      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
       ro.disconnect();
-      window.removeEventListener("resize", debouncedMeasure);
+      window.removeEventListener("resize", measure);
     };
-  }, [open, reduceMotion, numPages]);
+  }, [open, pageAspect]);
 
-  const handleFlipNext = useCallback(() => {
-    flipBookRef.current?.pageFlip()?.flipNext("top");
-    requestAnimationFrame(syncPageIndex);
-  }, [syncPageIndex]);
-
-  const handleFlipPrev = useCallback(() => {
-    flipBookRef.current?.pageFlip()?.flipPrev("top");
-    requestAnimationFrame(syncPageIndex);
-  }, [syncPageIndex]);
+  const onDocumentLoad = useCallback(async (pdf: pdfjs.PDFDocumentProxy) => {
+    setNumPages(pdf.numPages);
+    try {
+      const first = await pdf.getPage(1);
+      const vp = first.getViewport({ scale: 1 });
+      setPageAspect(vp.width / vp.height);
+    } catch {
+      setPageAspect(DEFAULT_PAGE_ASPECT);
+    }
+  }, []);
 
   if (!open) return null;
-
-  const previewTotal =
-    numPages !== null ? Math.min(numPages, MAX_PREVIEW_PAGES) : 0;
 
   const caption =
     numPages === null
@@ -199,57 +105,50 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
         ? `Sample preview: first ${previewTotal} of ${numPages} pages`
         : `${previewTotal} page${previewTotal === 1 ? "" : "s"}`;
 
-  const flipBookKey = `bk-${bookDims.w}x${bookDims.h}-${previewTotal}`;
-
   return (
     <div
-      className="fixed inset-0 z-[100] flex h-[100dvh] w-full flex-col bg-ink-950/85 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[100] flex max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ink-950"
       role="dialog"
       aria-modal="true"
       aria-labelledby="apolo-manuscript-title"
     >
-      <header className="flex shrink-0 items-start justify-between gap-3 border-b border-white/10 bg-ink-950/95 px-4 py-3 text-parchment sm:px-5">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-ink-950 px-3 py-2 text-parchment sm:px-4">
         <div className="min-w-0 flex-1">
           <p
             id="apolo-manuscript-title"
-            className="font-serif text-lg font-semibold leading-tight sm:text-xl"
+            className="truncate font-serif text-base font-semibold sm:text-lg"
           >
             Apolo-Kids — interior preview
           </p>
-          <p className="mt-1 text-xs text-parchment/75 sm:text-sm">
-            {reduceMotion
-              ? "Reduced motion: use Previous / Next."
-              : "Drag from a corner or edge to turn · Arrow keys · or use the buttons."}
+          <p className="truncate text-[11px] text-parchment/75 sm:text-xs">
+            Arrow keys or buttons to turn
             {caption ? ` · ${caption}` : ""}
+            {previewTotal > 0 ? ` · ${currentPage} / ${previewTotal}` : ""}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {!reduceMotion && previewTotal > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={handleFlipPrev}
-                disabled={pageIndex <= 0}
-                className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20 disabled:opacity-30"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleFlipNext}
-                disabled={pageIndex >= previewTotal - 1}
-                className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20 disabled:opacity-30"
-                aria-label="Next page"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={currentPage <= 1 || previewTotal === 0}
+            className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20 disabled:opacity-30 sm:h-10 sm:w-10"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={currentPage >= previewTotal || previewTotal === 0}
+            className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20 disabled:opacity-30 sm:h-10 sm:w-10"
+            aria-label="Next page"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20"
+            className="grid h-9 w-9 place-items-center rounded-full border border-white/20 bg-white/10 text-parchment transition hover:bg-white/20 sm:h-10 sm:w-10"
             aria-label="Close preview"
           >
             <X className="h-5 w-5" />
@@ -259,12 +158,13 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
 
       <div
         ref={stageRef}
-        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-ink-800/40 via-parchment to-parchment"
+        className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#f4f1e8]"
       >
         <Document
           file={APOLO_KIDS_MANUSCRIPT_PDF}
+          className="flex h-full w-full min-h-0 items-center justify-center"
           loading={
-            <div className="flex flex-col items-center justify-center gap-3 py-20 text-ink-700">
+            <div className="flex flex-col items-center justify-center gap-3 text-ink-700">
               <Loader2 className="h-10 w-10 animate-spin text-gold-700" />
               <p className="text-sm">Loading manuscript…</p>
             </div>
@@ -275,98 +175,40 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
               pre-order link for a full copy.
             </p>
           }
-          onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+          onLoadSuccess={onDocumentLoad}
         >
-          <ManuscriptPageWidthCtx.Provider value={pageRasterWidth}>
-            {numPages !== null && previewTotal > 0 && reduceMotion && (
-              <div className="flex max-h-full min-h-0 w-full flex-col items-center gap-3 overflow-auto px-2 py-3 sm:px-3">
-                <div className="w-full max-w-none rounded-lg border border-ink-900/10 bg-white p-1 shadow-inner sm:rounded-2xl sm:p-2">
-                  <Page
-                    pageNumber={simplePage}
-                    width={Math.min(
-                      Math.floor(
-                        typeof globalThis.window !== "undefined"
-                          ? globalThis.window.innerWidth - 24
-                          : 520,
-                      ),
-                      900,
-                    )}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                  />
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    className="btn-ghost px-4 py-2 text-sm disabled:opacity-40"
-                    disabled={simplePage <= 1}
-                    onClick={() =>
-                      setSimplePage((p) => Math.max(1, p - 1))
-                    }
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Previous
-                  </button>
-                  <span className="text-sm tabular-nums text-ink-700">
-                    {simplePage} / {previewTotal}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn-ghost px-4 py-2 text-sm disabled:opacity-40"
-                    disabled={simplePage >= previewTotal}
-                    onClick={() =>
-                      setSimplePage((p) => Math.min(previewTotal, p + 1))
-                    }
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+          {numPages !== null && previewTotal > 0 && (
+            <div className="flex h-full w-full items-center justify-center p-2 sm:p-3">
+              <div className="shadow-[0_8px_40px_-8px_rgba(24,20,40,0.35)]">
+                <Page
+                  key={currentPage}
+                  pageNumber={currentPage}
+                  width={renderWidth}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
               </div>
-            )}
-            {numPages !== null &&
-              previewTotal > 0 &&
-              !reduceMotion &&
-              flipReady && (
-              <div className="flex h-full min-h-0 w-full items-center justify-center p-1 sm:p-2">
-                <HTMLFlipBook
-                  key={flipBookKey}
-                  ref={flipBookRef}
-                  width={bookDims.w}
-                  height={bookDims.h}
-                  size="stretch"
-                  minWidth={260}
-                  maxWidth={9999}
-                  minHeight={380}
-                  maxHeight={9999}
-                  drawShadow
-                  maxShadowOpacity={0.5}
-                  showCover={false}
-                  mobileScrollSupport={false}
-                  className="godly-manuscript-flipbook"
-                  style={{}}
-                  startPage={0}
-                  flippingTime={850}
-                  usePortrait
-                  startZIndex={0}
-                  autoSize
-                  clickEventForward={false}
-                  useMouseEvents
-                  swipeDistance={24}
-                  showPageCorners
-                  disableFlipByClick={false}
-                  onFlip={() => requestAnimationFrame(syncPageIndex)}
-                  onInit={() => requestAnimationFrame(syncPageIndex)}
-                >
-                  {Array.from({ length: previewTotal }, (_, i) => (
-                    <FlipPdfPage key={i + 1} pageNumber={i + 1} />
-                  ))}
-                </HTMLFlipBook>
-              </div>
-            )}
-          </ManuscriptPageWidthCtx.Provider>
+            </div>
+          )}
         </Document>
-      </div>
 
-      {/* Click-catcher removed from stacking above flipbook — fullscreen chrome uses header only */}
+        {previewTotal > 0 && (
+          <>
+            <button
+              type="button"
+              aria-label="Previous page"
+              className="absolute inset-y-0 left-0 z-10 w-[min(28%,120px)] cursor-w-resize bg-transparent"
+              onClick={goPrev}
+            />
+            <button
+              type="button"
+              aria-label="Next page"
+              className="absolute inset-y-0 right-0 z-10 w-[min(28%,120px)] cursor-e-resize bg-transparent"
+              onClick={goNext}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

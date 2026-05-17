@@ -73,15 +73,6 @@
    Intro animation — full-screen overlay that plays once per session on first
    visit. Camera "flies through clouds" toward the Kingdom Builders castle.
    --------------------------------------------------------------------------- */
-/* Apolo-Kids manuscript modal · StPageFlip needs undisputed pointers on the book surface */
-.godly-manuscript-flipbook .stf__parent {
-  touch-action: none;
-}
-
-.godly-manuscript-flipbook canvas {
-  pointer-events: none;
-}
-
 @layer utilities {
   @keyframes intro-cloud-pass {
     0% {
