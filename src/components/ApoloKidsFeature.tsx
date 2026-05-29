@@ -1,19 +1,16 @@
 import { useState } from "react";
 import {
-  BookOpen,
   BookMarked,
-  Check,
   Gamepad2,
   ShieldCheck,
   Sparkles,
   Swords,
   type LucideIcon,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useParallaxOffset, useReveal } from "../hooks/useReveal";
 import { ApoloKidsManuscriptPreview } from "./ApoloKidsManuscriptPreview";
-
-const APOLO_KIDS_PREORDER_URL =
-  "mailto:hello@kbpublish.org?subject=Apolo-Kids%20Pre-order&body=I%27d%20like%20to%20pre-order%20Apolo-Kids%20%28%2449.99%29.%20Please%20send%20me%20payment%20instructions.%20Thank%20you!";
+import { ApoloKidsPurchaseOptions } from "./ApoloKidsPurchaseOptions";
 
 const highlights: { icon: LucideIcon; title: string; copy: string }[] = [
   {
@@ -65,7 +62,7 @@ export function ApoloKidsFeature() {
             }`}
           >
             <span className="inline-flex items-center gap-2 rounded-full bg-ink-950 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-              <Sparkles className="h-3.5 w-3.5" /> New Release · Pre-order
+              <Sparkles className="h-3.5 w-3.5" /> New Release · In print
             </span>
             <h2 className="mt-5 font-serif text-4xl font-semibold leading-[1.05] tracking-tight text-ink-950 sm:text-5xl lg:text-6xl">
               Apolo-Kids
@@ -96,7 +93,7 @@ export function ApoloKidsFeature() {
               >
                 <img
                   src="/featured/apolo-kids.png?v=3"
-                  alt="Apolo-Kids — Apologetics for Young Defenders, a hardcover Christian textbook for kids 14+"
+                  alt="Apolo-Kids — Apologetics for Young Defenders, a Christian textbook for kids 14+"
                   loading="lazy"
                   className="block w-full select-none"
                   draggable={false}
@@ -138,38 +135,26 @@ export function ApoloKidsFeature() {
               ))}
             </ul>
 
-            <div className="mt-9 flex flex-col gap-5 rounded-3xl border border-ink-900/10 bg-white/85 p-6 shadow-soft backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-7">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink-700">
-                  Hardcover textbook
-                </p>
-                <p className="mt-1 font-serif text-3xl font-semibold text-ink-950 sm:text-4xl">
-                  $49.99
-                </p>
-                <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-ink-700">
-                  <Check className="h-3.5 w-3.5 text-gold-700" />
-                  Free U.S. shipping on launch
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[220px]">
+            <div className="mt-9 flex flex-col gap-5 rounded-3xl border border-ink-900/10 bg-white/85 p-6 shadow-soft backdrop-blur-sm sm:p-7">
+              <ApoloKidsPurchaseOptions compact />
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
+                <Link
+                  to="/apolokids"
+                  className="btn-ghost w-full justify-center border-ink-900/20 text-base sm:w-auto sm:min-w-[220px]"
+                >
+                  See More Details
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
                     setPreviewSession((s) => s + 1);
                     setPreviewOpen(true);
                   }}
-                  className="btn-ghost w-full justify-center border-ink-900/20 text-base"
+                  className="btn-ghost w-full justify-center border-ink-900/20 text-base sm:w-auto sm:min-w-[220px]"
                 >
                   <BookMarked className="h-4 w-4" />
                   Preview manuscript
                 </button>
-                <a
-                  href={APOLO_KIDS_PREORDER_URL}
-                  className="btn-gold w-full justify-center text-base"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Pre-order Online
-                </a>
               </div>
             </div>
           </div>

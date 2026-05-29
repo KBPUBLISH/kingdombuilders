@@ -9,6 +9,7 @@ import { Store } from "./pages/Store";
 import { Newsletter } from "./pages/Newsletter";
 import { Contact } from "./pages/Contact";
 import { NotFound } from "./pages/NotFound";
+import { ApoloKids } from "./pages/ApoloKids";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/books" element={<Books />} />
           <Route path="/listen" element={<Listen />} />
           <Route path="/store" element={<Store />} />
+          <Route path="/apolokids" element={<ApoloKids />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />

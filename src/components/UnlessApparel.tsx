@@ -55,14 +55,17 @@ type LookbookShot = {
   alt: string;
   label: string;
   caption: string;
+  /** Logo graphic on brand color instead of a lifestyle photo */
+  logoMark?: boolean;
 };
 
 const lookbook: LookbookShot[] = [
   {
-    src: "/apparel/unless-womens.png",
-    alt: "Woman wearing a heather-rose UNLESS t-shirt in a church kids' ministry",
+    src: "/apparel/unless-logo-white.svg",
+    alt: "UNLESS wordmark in white on heather rose",
     label: "Women's · Heather Rose",
     caption: "Soft tri-blend tee, hand-lettered UNLESS print.",
+    logoMark: true,
   },
   {
     src: "/apparel/unless-mens.png",
@@ -257,17 +260,29 @@ export function UnlessApparel() {
                 className="group relative overflow-hidden rounded-2xl border border-parchment/10 bg-white/[0.04] backdrop-blur-sm transition hover:-translate-y-1 hover:border-gold-300/30"
                 style={{ transitionDelay: lookbookVisible ? `${i * 80}ms` : "0ms" }}
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden">
+                <div
+                  className={`relative aspect-[4/5] w-full overflow-hidden ${
+                    shot.logoMark ? "bg-[#c9a3a8]" : ""
+                  }`}
+                >
                   <img
                     src={shot.src}
                     alt={shot.alt}
                     loading="lazy"
-                    className="block h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                    className={`block h-full w-full transition duration-700 group-hover:scale-[1.04] ${
+                      shot.logoMark
+                        ? "object-contain p-6 sm:p-8"
+                        : "object-cover"
+                    }`}
                   />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink-950/70 to-transparent" />
-                  <span className="font-hand pointer-events-none absolute left-3 top-3 text-xl text-gold-300/95 drop-shadow-md sm:left-4 sm:top-4 sm:text-2xl">
-                    unless
-                  </span>
+                  {!shot.logoMark && (
+                    <>
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink-950/70 to-transparent" />
+                      <span className="font-hand pointer-events-none absolute left-3 top-3 text-xl text-gold-300/95 drop-shadow-md sm:left-4 sm:top-4 sm:text-2xl">
+                        unless
+                      </span>
+                    </>
+                  )}
                 </div>
                 <figcaption className="flex items-center justify-between gap-2 p-3 sm:p-4">
                   <div className="min-w-0">
