@@ -39,6 +39,7 @@ import {
   type Book,
   type Playlist,
 } from "../services/api";
+import { filterCatalogBooks } from "../utils/catalogFilters";
 
 export function Home() {
   const [allFeaturedBooks, setAllFeaturedBooks] = useState<Book[]>([]);
@@ -56,11 +57,13 @@ export function Home() {
     ])
       .then(([featuredRes, allRes]) => {
         if (cancelled) return;
-        const sorted = [...(featuredRes.data || [])].sort(
-          (a, b) => (a.featuredOrder ?? 99) - (b.featuredOrder ?? 99),
+        const sorted = filterCatalogBooks(
+          [...(featuredRes.data || [])].sort(
+            (a, b) => (a.featuredOrder ?? 99) - (b.featuredOrder ?? 99),
+          ),
         );
         setAllFeaturedBooks(sorted);
-        setAllBooks(allRes.data || []);
+        setAllBooks(filterCatalogBooks(allRes.data || []));
       })
       .catch(() => {
         if (!cancelled) {

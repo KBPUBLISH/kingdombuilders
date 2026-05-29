@@ -7,6 +7,7 @@ import {
   bookCoverUrl,
   type Book,
 } from "../services/api";
+import { filterCatalogBooks } from "../utils/catalogFilters";
 
 export function Books() {
   const [allBooks, setAllBooks] = useState<Book[]>([]);
@@ -21,7 +22,7 @@ export function Books() {
       .list({ status: "published", limit: 100 })
       .then((res) => {
         if (cancelled) return;
-        setAllBooks(res.data || []);
+        setAllBooks(filterCatalogBooks(res.data || []));
       })
       .catch((err) => {
         if (cancelled) return;
