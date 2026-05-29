@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { APOLO_KIDS_PAGE_PATH } from "../data/apoloKidsShop";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { useReveal } from "../hooks/useReveal";
 
@@ -166,13 +168,13 @@ export function GodlyKidsPromo() {
               <GooglePlayBadge />
             </div>
 
-            <a
-              href="#apolo-kids"
+            <Link
+              to={APOLO_KIDS_PAGE_PATH}
               className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-ink-900 hover:text-gold-700"
             >
               Continue to Apolo-Kids textbook
-              <ChevronDown className="h-4 w-4" />
-            </a>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
           <div

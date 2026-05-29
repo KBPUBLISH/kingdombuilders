@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useParallaxOffset, useReveal } from "../hooks/useReveal";
+import { APOLO_KIDS_PAGE_PATH } from "../data/apoloKidsShop";
 import { ApoloKidsManuscriptPreview } from "./ApoloKidsManuscriptPreview";
 import { ApoloKidsPurchaseOptions } from "./ApoloKidsPurchaseOptions";
 
@@ -139,7 +140,7 @@ export function ApoloKidsFeature() {
               <ApoloKidsPurchaseOptions compact />
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
                 <Link
-                  to="/apolokids"
+                  to={APOLO_KIDS_PAGE_PATH}
                   className="btn-ghost w-full justify-center border-ink-900/20 text-base sm:w-auto sm:min-w-[220px]"
                 >
                   See More Details

@@ -1,3 +1,5 @@
+export const APOLO_KIDS_PAGE_PATH = "/apolokids";
+
 export const APOLO_KIDS_SOFT_COVER_URL = "https://books.by/kingdombuilders";
 
 export const APOLO_KIDS_HARD_COVER_URL =

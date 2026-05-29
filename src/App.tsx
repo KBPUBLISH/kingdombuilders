@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { IntroAnimation } from "./components/IntroAnimation";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
@@ -23,6 +23,7 @@ function App() {
           <Route path="/listen" element={<Listen />} />
           <Route path="/store" element={<Store />} />
           <Route path="/apolokids" element={<ApoloKids />} />
+          <Route path="/apolo-kids" element={<Navigate to="/apolokids" replace />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
