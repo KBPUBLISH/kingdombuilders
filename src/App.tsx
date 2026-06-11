@@ -10,6 +10,7 @@ import { Newsletter } from "./pages/Newsletter";
 import { Contact } from "./pages/Contact";
 import { NotFound } from "./pages/NotFound";
 import { ApoloKids } from "./pages/ApoloKids";
+import { ApoloKidsPreview } from "./pages/ApoloKidsPreview";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/listen" element={<Listen />} />
           <Route path="/store" element={<Store />} />
           <Route path="/apolokids" element={<ApoloKids />} />
+          <Route path="/apolokids/preview" element={<ApoloKidsPreview />} />
           <Route path="/apolo-kids" element={<Navigate to="/apolokids" replace />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/contact" element={<Contact />} />
