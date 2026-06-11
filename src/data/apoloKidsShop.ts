@@ -1,5 +1,8 @@
 export const APOLO_KIDS_PAGE_PATH = "/apolokids";
 
+export const APOLO_KIDS_BUY_ONLINE_URL =
+  "https://buy.stripe.com/eVq7sFfgegBVep71Gy4F201";
+
 export const APOLO_KIDS_SOFT_COVER_URL = "https://books.by/kingdombuilders";
 
 export const APOLO_KIDS_HARD_COVER_URL =

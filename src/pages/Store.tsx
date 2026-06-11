@@ -1,4 +1,5 @@
 import { Lock, ShoppingBag, Sparkles } from "lucide-react";
+import { ApoloKidsStore } from "../components/ApoloKidsStore";
 import { ChristianLevelsStore } from "../components/ChristianLevelsStore";
 import { PageHero } from "../components/PageHero";
 
@@ -7,12 +8,13 @@ export function Store() {
     <>
       <PageHero
         eyebrow="Store"
-        title={<>Christian Level curriculum<br />for young defenders.</>}
-        description="Purchase Level 1, Level 2, Level 3, or the full bundle — secure checkout powered by Stripe."
+        title={<>Books and curriculum<br />for young defenders.</>}
+        description="Purchase Christian Level curriculum, Apolo-Kids, and more — secure checkout powered by Stripe."
       />
 
       <section className="section pt-0">
-        <div className="container-page">
+        <div className="container-page space-y-6">
+          <ApoloKidsStore />
           <ChristianLevelsStore />
         </div>
       </section>
