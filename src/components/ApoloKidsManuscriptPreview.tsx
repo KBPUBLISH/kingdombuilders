@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 
 export const APOLO_KIDS_MANUSCRIPT_PDF = "/documents/apolo-kids-interior.pdf";
 
-const MAX_PREVIEW_PAGES = 28;
 /** Fallback until page 1 viewport is read from the PDF. */
 const DEFAULT_PAGE_ASPECT = 520 / 720;
 
@@ -20,8 +19,7 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
   const [renderWidth, setRenderWidth] = useState(480);
   const stageRef = useRef<HTMLDivElement>(null);
 
-  const previewTotal =
-    numPages !== null ? Math.min(numPages, MAX_PREVIEW_PAGES) : 0;
+  const previewTotal = numPages ?? 0;
 
   useEffect(() => {
     if (!open) return;
@@ -101,9 +99,7 @@ export function ApoloKidsManuscriptPreview({ open, onClose }: Props) {
   const caption =
     numPages === null
       ? ""
-      : numPages > MAX_PREVIEW_PAGES
-        ? `Sample preview: first ${previewTotal} of ${numPages} pages`
-        : `${previewTotal} page${previewTotal === 1 ? "" : "s"}`;
+      : `${previewTotal} page${previewTotal === 1 ? "" : "s"}`;
 
   return (
     <div
